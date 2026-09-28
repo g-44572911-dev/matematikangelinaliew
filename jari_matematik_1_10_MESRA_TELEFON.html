@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Jari Matematik 1–10 | Prasekolah 2026</title>
+<style>
+:root{
+  --bg:#f4f7ff;--card:#fff;--ink:#17203a;--muted:#64708b;
+  --primary:#5b5ce2;--secondary:#7c3aed;--good:#16a34a;--bad:#dc2626;
+  --shadow:0 12px 35px rgba(30,41,100,.12);--radius:24px;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-rounded,system-ui,-apple-system,"Segoe UI",sans-serif;background:linear-gradient(135deg,#eef2ff,#fdf4ff);color:var(--ink)}
+button{font:inherit}
+.app{max-width:1200px;margin:auto;padding:18px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:14px}
+.brand h1{font-size:clamp(24px,4vw,40px);margin:0 0 4px}
+.brand p{margin:0;color:var(--muted)}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.badge{background:white;padding:9px 13px;border-radius:999px;box-shadow:var(--shadow);font-weight:800;font-size:13px}
+.game{display:grid;grid-template-columns:420px 1fr;gap:18px}
+.panel,.quiz{background:rgba(255,255,255,.94);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid #e8eaff}
+.panel{padding:15px}
+.cameraWrap{position:relative;aspect-ratio:4/3;background:#111827;border-radius:18px;overflow:hidden}
+video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#handCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1)}
+.cursor{position:absolute;width:25px;height:25px;border-radius:50%;border:4px solid #fff;background:#ff4d9d;box-shadow:0 0 0 5px rgba(255,77,157,.25);pointer-events:none;transform:translate(-50%,-50%);display:none;z-index:4}
+.cursor.pinched{background:#16a34a;transform:translate(-50%,-50%) scale(1.25)}
+.quizCursor{position:fixed;width:28px;height:28px;border-radius:50%;border:4px solid #fff;background:#ff4d9d;box-shadow:0 0 0 5px rgba(255,77,157,.25);pointer-events:none;transform:translate(-50%,-50%);display:none;z-index:9999}.quizCursor.pinched{background:#16a34a;transform:translate(-50%,-50%) scale(1.2)}
+.camStatus{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.65);color:#fff;padding:8px 10px;border-radius:12px;font-size:12px;font-weight:700}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.btn{border:0;border-radius:14px;padding:11px 14px;font-weight:800;cursor:pointer;background:#eef2ff;color:#30377a}
+.btn.primary{background:var(--primary);color:white}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.help{margin-top:12px;padding:12px;border-radius:16px;background:#f7f7ff;color:#505a79;font-size:13px;line-height:1.5}
+.quiz{padding:22px;min-height:100%}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.level{font-weight:900;padding:7px 11px;border-radius:999px;background:#ede9fe;color:#6d28d9}
+.progress{height:10px;background:#edf0f7;border-radius:999px;overflow:hidden;margin:10px 0 20px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),#c026d3);width:0%;transition:.3s}
+.question{font-size:clamp(24px,4vw,38px);font-weight:950;line-height:1.15;text-align:center;margin:25px 0 18px}
+.instruction{text-align:center;color:var(--muted);font-weight:700;margin-bottom:18px}
+.options{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.option{min-height:105px;border:3px solid #e7e9f5;background:white;border-radius:22px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:clamp(28px,5vw,44px);font-weight:950;cursor:pointer;position:relative;transition:.15s;user-select:none}
+.option:hover,.option.hover{border-color:#818cf8;background:#f5f3ff;transform:translateY(-2px)}
+.option.selected{border-color:#f59e0b;box-shadow:0 0 0 5px #fef3c7}
+.option.correct{background:#dcfce7;border-color:var(--good)}
+.option.wrong{background:#fee2e2;border-color:var(--bad)}
+.option .tag{position:absolute;left:10px;top:8px;font-size:11px;background:#f1f5f9;color:#64748b;border-radius:8px;padding:3px 6px}
+.feedback{min-height:60px;margin-top:18px;border-radius:17px;padding:12px;text-align:center;font-weight:850;display:flex;align-items:center;justify-content:center}
+.feedback.good{background:#dcfce7;color:#166534}
+.feedback.bad{background:#fee2e2;color:#991b1b}
+.next{width:100%;margin-top:12px;padding:15px;border:0;border-radius:16px;background:#17203a;color:white;font-weight:900;cursor:pointer;font-size:17px}
+.next:disabled{opacity:.35;cursor:not-allowed}
+.result{text-align:center;padding:18px}
+.score{font-size:64px;font-weight:1000;color:var(--primary)}
+.small{color:var(--muted);font-size:13px}
+.footer{text-align:center;color:#7a849f;font-size:12px;margin-top:14px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:20}
+@media(max-width:900px){.game{grid-template-columns:1fr}.panel{order:2}.quiz{order:1}}
+@media(max-width:520px){.app{padding:10px}.options{grid-template-columns:1fr 1fr}.option{min-height:90px}.quiz{padding:15px}.badges{display:none}}
+
+/* ===== PHONE / TABLET ===== */
+html,body{min-height:100%;-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+.app{width:100%;max-width:1200px}
+button,.option{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+@media(max-width:900px){
+  .app{padding:10px}
+  header{align-items:flex-start}
+  .brand h1{font-size:clamp(23px,7vw,34px)}
+  .brand p{font-size:13px}
+  .game{grid-template-columns:1fr;gap:10px}
+  .quiz{order:1;padding:14px}
+  .panel{order:2;padding:10px}
+  .cameraWrap{width:100%;aspect-ratio:4/3;max-height:58vh}
+  .options{gap:10px}
+  .option{min-height:88px;font-size:clamp(30px,9vw,44px);border-width:3px}
+  .question{font-size:clamp(25px,7vw,36px);margin:18px 0 12px}
+  .instruction{font-size:13px;margin-bottom:12px}
+  .next{min-height:54px}
+  .controls{display:grid;grid-template-columns:1fr 1fr}
+  .controls .btn{min-height:48px}
+  .controls .btn.primary{grid-column:1/-1}
+  .help{font-size:12px}
+}
+@media(max-width:520px){
+  .app{padding:7px}
+  header{margin-bottom:7px}
+  .badges{display:flex;gap:5px}
+  .badge{padding:6px 8px;font-size:10px}
+  .game{gap:7px}
+  .quiz{padding:11px}
+  .panel{padding:7px}
+  .cameraWrap{border-radius:14px}
+  .camStatus{font-size:10px;padding:6px 8px}
+  .options{grid-template-columns:1fr 1fr;gap:8px}
+  .option{min-height:82px;border-radius:16px}
+  .option .tag{font-size:9px;left:7px;top:6px}
+  .feedback{min-height:52px;margin-top:10px;font-size:13px}
+  .small{font-size:11px}
+  .footer{font-size:10px}
+}
+@media(max-width:380px){
+  .options{gap:6px}
+  .option{min-height:74px;font-size:29px}
+  .question{font-size:24px}
+}
+
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="app">
+<header>
+  <div class="brand">
+    <h1>☝️ Jari Matematik 1–10</h1>
+    <p>Kuis interaktif Prasekolah • umur 5–6 tahun • TP1–TP3</p>
+  </div>
+  <div class="badges">
+    <span class="badge">🔢 Nombor 1–10</span>
+    <span class="badge">➕ Tambah</span>
+    <span class="badge">🖐️ MediaPipe Hands</span>
+    <span class="badge">📱 Telefon</span>
+  </div>
+</header>
+
+<div class="game">
+<section class="panel">
+  <div class="cameraWrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="handCanvas"></canvas>
+    <div id="cursor" class="cursor"></div>
+    <div id="camStatus" class="camStatus">Kamera belum dimulakan</div>
+  </div>
+  <div class="controls">
+    <button id="startBtn" class="btn primary">📷 Mula Kamera</button>
+    <button id="stopBtn" class="btn" disabled>⏹ Berhenti</button>
+    <button id="mouseBtn" class="btn">🖱️ Mod Tetikus</button>
+  </div>
+  <div class="help">
+    <b>Cara bermain di telefon:</b><br>
+    1. Tekan <b>Mula Kamera</b> dan benarkan akses kamera.<br>
+    2. Angkat <b>telunjuk</b> untuk menggerakkan kursor merah.<br>
+    3. Arahkan kursor ke jawapan. <b>Sentuh ibu jari + telunjuk</b> untuk memilih.<br>
+    4. Pada telefon, gunakan skrin secara menegak atau melintang. Jika kamera tidak dibenarkan, gunakan Mod Tetikus/ sentuhan.<br>5. Untuk aktiviti susun nombor, tahan pinch dan gerakkan ke kotak sasaran.
+  </div>
+</section>
+
+<section class="quiz">
+  <div id="quizArea"></div>
+   <div id="quizCursor" class="quizCursor"></div>
+</section>
+</div>
+<div class="footer">TICERD EDU • Aktiviti digital matematik prasekolah • Boleh digunakan dengan tetikus jika kamera tidak tersedia.</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script>
+/*
+  JARI MATEMATIK 1–10
+  10 aktiviti:
+  TP1: kenal nombor / pilih nombor
+  TP2: padan, urut dan banding nombor
+  TP3: tambah dalam lingkungan 10
+*/
+
+const questions = [
+ {tp:"TP1", type:"choice", q:"Pilih nombor 3.", opts:["2","3","5","8"], a:"3", explain:"Ya! Ini nombor 3."},
+ {tp:"TP1", type:"choice", q:"Berapa banyak 🍎?  🍎 🍎 🍎 🍎", opts:["3","4","5","6"], a:"4", explain:"Betul! Ada 4 biji epal."},
+ {tp:"TP1", type:"choice", q:"Pilih nombor 7.", opts:["6","7","8","9"], a:"7", explain:"Betul! Ini nombor 7."},
+ {tp:"TP2", type:"choice", q:"Nombor manakah datang selepas 5?", opts:["4","6","7","10"], a:"6", explain:"Betul! Selepas 5 ialah 6."},
+ {tp:"TP2", type:"choice", q:"Susunan manakah betul dari kecil ke besar?", opts:["2 → 3 → 4","4 → 3 → 2","3 → 2 → 4","4 → 2 → 3"], a:"2 → 3 → 4", explain:"Betul! 2, 3, 4 disusun dari kecil ke besar."},
+ {tp:"TP2", type:"choice", q:"Nombor manakah lebih besar: 6 atau 9?", opts:["6","9","Sama","0"], a:"9", explain:"Betul! 9 lebih besar daripada 6."},
+ {tp:"TP3", type:"choice", q:"2 + 3 = ?", opts:["4","5","6","7"], a:"5", explain:"Betul! 2 tambah 3 ialah 5."},
+ {tp:"TP3", type:"choice", q:"4 + 2 = ?", opts:["5","6","7","8"], a:"6", explain:"Betul! 4 tambah 2 ialah 6."},
+ {tp:"TP3", type:"choice", q:"5 + 4 = ?", opts:["7","8","9","10"], a:"9", explain:"Betul! 5 tambah 4 ialah 9."},
+ {tp:"TP3", type:"choice", q:"6 + 4 = ?", opts:["8","9","10","11"], a:"10", explain:"Betul! 6 tambah 4 ialah 10."}
+];
+
+let index=0, score=0, answered=false, hoverEl=null, stream=null, hands=null, mpCamera=null;
+let pinchDown=false, dragEl=null, mouseMode=false;
+const video=document.getElementById("video");
+const canvas=document.getElementById("handCanvas");
+const ctx=canvas.getContext("2d");
+const cursor=document.getElementById("cursor");
+const quizCursor=document.getElementById("quizCursor");
+const status=document.getElementById("camStatus");
+const quizArea=document.getElementById("quizArea");
+
+function render(){
+  if(index>=questions.length){ renderResult(); return; }
+  const x=questions[index];
+  quizArea.innerHTML=`
+    <div class="topline"><span class="level">${x.tp}</span><b>Skor: ${score}/${questions.length}</b></div>
+    <div class="progress"><i style="width:${index/questions.length*100}%"></i></div>
+    <div class="small">Soalan ${index+1} daripada ${questions.length}</div>
+    <div class="question">${x.q}</div>
+    <div class="instruction">☝️ Halakan jari ke jawapan • 🤏 pinch untuk pilih • 📱 Ketuk jawapan jika guna sentuhan</div>
+    <div class="options">${x.opts.map((o,i)=>`<div class="option" tabindex="0" data-value="${escapeHtml(o)}"><span class="tag">${String.fromCharCode(65+i)}</span>${o}</div>`).join("")}</div>
+    <div id="feedback" class="feedback"></div>
+    <button id="nextBtn" class="next" disabled>Soalan Seterusnya ➜</button>
+  `;
+  document.querySelectorAll(".option").forEach(el=>{
+    el.addEventListener("click",()=>choose(el));
+    el.addEventListener("pointerenter",()=>setHover(el));
+    el.addEventListener("pointerleave",()=>clearHover());
+  });
+  document.getElementById("nextBtn").addEventListener("click",next);
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function setHover(el){
+  if(hoverEl&&hoverEl!==el) hoverEl.classList.remove("hover");
+  hoverEl=el; if(el) el.classList.add("hover");
+}
+function clearHover(){if(hoverEl) hoverEl.classList.remove("hover");hoverEl=null;}
+function choose(el){
+  if(answered)return;
+  answered=true;
+  const val=el.dataset.value, x=questions[index], good=val===x.a;
+  if(good){score++;el.classList.add("correct");}
+  else{
+    el.classList.add("wrong");
+    document.querySelectorAll(".option").forEach(o=>{if(o.dataset.value===x.a)o.classList.add("correct")});
+  }
+  const fb=document.getElementById("feedback");
+  fb.className="feedback "+(good?"good":"bad");
+  fb.innerHTML=good?"🎉 Hebat! "+x.explain:"🌱 Cuba lagi! Jawapan betul ialah <b>"+escapeHtml(x.a)+"</b>.";
+  const nb=document.getElementById("nextBtn"); nb.disabled=false;
+  if(good)celebrate();
+}
+function next(){index++;answered=false;render();}
+function renderResult(){
+  quizArea.innerHTML=`
+   <div class="result">
+    <div style="font-size:70px">🏆</div>
+    <h2>Tahniah!</h2>
+    <div class="score">${score}/10</div>
+    <p>${score>=8?"Hebat! Kamu sangat bagus dalam nombor dan tambah.":score>=5?"Bagus! Teruskan latihan nombor 1 hingga 10.":"Jom cuba lagi. Kita belajar nombor sedikit demi sedikit!"}</p>
+    <button class="next" id="restart">🔄 Main Semula</button>
+   </div>`;
+  document.getElementById("restart").onclick=()=>{index=0;score=0;answered=false;render();}
+}
+
+function celebrate(){
+ const c=document.getElementById("confetti"), cctx=c.getContext("2d");
+ c.width=innerWidth;c.height=innerHeight;
+ const bits=Array.from({length:70},()=>({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*9,vy:-Math.random()*9-2,r:3+Math.random()*5,g:.25+Math.random()*.15}));
+ let t=0;
+ (function anim(){
+  cctx.clearRect(0,0,c.width,c.height);
+  bits.forEach(b=>{b.x+=b.vx;b.vy+=.25;b.y+=b.vy;cctx.fillRect(b.x,b.y,b.r,b.r)});
+  if(t++<55)requestAnimationFrame(anim); else cctx.clearRect(0,0,c.width,c.height);
+ })();
+}
+
+/* ---------- MediaPipe Hands ---------- */
+function resizeCanvas(){
+ canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
+}
+function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function onResults(results){
+ resizeCanvas();
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(!results.multiHandLandmarks || !results.multiHandLandmarks.length){
+   cursor.style.display="none"; quizCursor.style.display="none"; status.textContent="Tangan tidak dikesan";
+   if(hoverEl)clearHover();
+   return;
+ }
+ status.textContent="Tangan dikesan ✓";
+ const lm=results.multiHandLandmarks[0];
+ drawConnectors(ctx,lm,HAND_CONNECTIONS,{color:"#7c3aed",lineWidth:3});
+ drawLandmarks(ctx,lm,{color:"#fff",lineWidth:1,radius:3});
+ const tip=lm[8], thumb=lm[4];
+ // video is mirrored visually; convert x for screen overlay because cursor sits over mirrored video
+ const px=(1-tip.x)*100, py=tip.y*100;
+ cursor.style.display="block";
+ cursor.style.left=px+"%";cursor.style.top=py+"%";
+
+ // Petakan hujung jari daripada kamera kepada kawasan jawapan di sebelah kanan.
+ const quizRect=quizArea.getBoundingClientRect();
+ const qx=quizRect.left+(1-tip.x)*quizRect.width;
+ const qy=quizRect.top+tip.y*quizRect.height;
+ quizCursor.style.display="block";
+ quizCursor.style.left=qx+"px";
+ quizCursor.style.top=qy+"px";
+
+ const pinch=distance(tip,thumb)<0.065;
+ cursor.classList.toggle("pinched",pinch);
+ quizCursor.classList.toggle("pinched",pinch);
+ const target=document.elementFromPoint(qx,qy);
+ const option=target?.closest?.(".option");
+ if(option && !answered){
+   setHover(option);
+   if(pinch && !pinchDown){ choose(option); }
+ }
+ pinchDown=pinch;
+}
+
+async function startCamera(){
+ if(!window.Hands){alert("MediaPipe belum dimuat. Semak sambungan internet dan muat semula.");return;}
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:720}},audio:false});
+  video.srcObject=stream;
+  await video.play();
+  hands=new Hands({locateFile:(file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`});
+  hands.setOptions({maxNumHands:1,modelComplexity:1,minDetectionConfidence:.65,minTrackingConfidence:.6});
+  hands.onResults(onResults);
+  const loop=async()=>{
+    if(!stream)return;
+    if(video.readyState>=2) await hands.send({image:video});
+    requestAnimationFrame(loop);
+  };
+  status.textContent="Kamera aktif • angkat jari ☝️";
+  document.getElementById("startBtn").disabled=true;
+  document.getElementById("stopBtn").disabled=false;
+  requestAnimationFrame(loop);
+ }catch(e){
+  console.error(e);
+  alert("Kamera tidak dapat digunakan. Pastikan anda memberi kebenaran kamera. Anda masih boleh guna Mod Tetikus.");
+ }
+}
+function stopCamera(){
+ if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+ video.srcObject=null; cursor.style.display="none"; quizCursor.style.display="none";ctx.clearRect(0,0,canvas.width,canvas.height);
+ document.getElementById("startBtn").disabled=false;document.getElementById("stopBtn").disabled=true;
+ status.textContent="Kamera dihentikan";
+}
+document.getElementById("startBtn").onclick=startCamera;
+document.getElementById("stopBtn").onclick=stopCamera;
+document.getElementById("mouseBtn").onclick=()=>{
+ mouseMode=!mouseMode;
+ document.getElementById("mouseBtn").textContent=mouseMode?"🖱️ Mod Tetikus: ON":"🖱️ Mod Tetikus";
+ status.textContent=mouseMode?"Mod tetikus aktif":"Mod kamera";
+};
+
+render();
+window.addEventListener("resize",()=>{if(video.videoWidth)resizeCanvas();});
+</script>
+
+<script>
+(function(){
+  const secureHint = document.createElement("div");
+  secureHint.id = "secureHint";
+  secureHint.style.cssText =
+    "display:none;margin:8px 0;padding:10px 12px;border-radius:14px;background:#fff7ed;color:#9a3412;font-size:12px;font-weight:700;text-align:center";
+  secureHint.innerHTML = "📱 Untuk kamera berfungsi di telefon, buka halaman melalui <b>HTTPS</b> (contohnya GitHub Pages/Netlify), bukan terus sebagai fail HTML.";
+  const panel = document.querySelector(".panel");
+  if(panel) panel.insertBefore(secureHint, panel.firstElementChild);
+  if(location.protocol !== "https:" && location.hostname !== "localhost" && location.protocol !== "file:"){
+    secureHint.style.display = "block";
+  }
+})();
+</script>
+
+</body>
+</html>
